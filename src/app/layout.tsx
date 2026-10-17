@@ -21,7 +21,7 @@ const newsreader = Newsreader({
 export const metadata: Metadata = {
   title: "Wick — crypto buy and sell marks",
   description:
-    "Pick one to five coins. Wick reads CoinGecko and marks each one buy, sell, or hold.",
+    "Pick one to five coins. Wick reads CoinGecko, CoinMarketCap, and CoinStats, then marks each coin buy, sell, or hold.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

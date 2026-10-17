@@ -31,6 +31,18 @@ export type SignalCore = {
   chart: ChartPoint[];
 };
 
+export type SourceId = "coingecko" | "coinmarketcap" | "coinstats";
+
+export type SourceQuote = {
+  source: SourceId;
+  label: string;
+  price: number | null;
+  change24h: number | null;
+  change7d: number | null;
+  href: string | null;
+  listedAs: string | null;
+};
+
 export type CoinSignal = SignalCore & {
   id: string;
   symbol: string;
@@ -40,6 +52,8 @@ export type CoinSignal = SignalCore & {
   change24h: number | null;
   marketCap: number | null;
   volume24h: number | null;
+  sources: SourceQuote[];
+  spreadNote: string;
 };
 
 export type SignalsResponse = {

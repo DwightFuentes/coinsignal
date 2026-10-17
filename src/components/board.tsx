@@ -19,7 +19,7 @@ import { RefreshCw } from "lucide-react";
 
 function ageLabel(updatedAt: string | null, loading: boolean, refreshing: boolean, now: number) {
   if (refreshing) return "Refreshing…";
-  if (loading && !updatedAt) return "Reading CoinGecko…";
+  if (loading && !updatedAt) return "Reading three price sources…";
   if (!updatedAt) return "Checks every minute";
   const seconds = Math.max(0, Math.round((now - Date.parse(updatedAt)) / 1000));
   const when = seconds < 5 ? "just now" : seconds < 60 ? `${seconds}s ago` : `${Math.floor(seconds / 60)}m ago`;
@@ -59,7 +59,10 @@ export function Board({
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
           <div>
             <p className="font-serif text-2xl leading-none italic">Wick</p>
-            <p className="text-xs text-muted-foreground">CoinGecko signal desk</p>
+            <p className="text-xs text-muted-foreground">
+              <span className="sm:hidden">Three price sources</span>
+              <span className="hidden sm:inline">CoinGecko, CoinMarketCap, CoinStats</span>
+            </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <p className="hidden text-xs text-muted-foreground sm:block">
@@ -180,6 +183,8 @@ function MarkDetail({ coin }: { coin: CoinSignal }) {
       <p className="mt-4 text-xl">{coin.headline}</p>
       <p className="mt-2 max-w-2xl text-muted-foreground">{coin.narrative}</p>
 
+      <SourceList coin={coin} />
+
       <dl className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Stat label="Price" value={formatUsd(coin.price)} />
         <Stat label="24h" value={formatPct(coin.change24h)} className={pctTone(coin.change24h)} />
@@ -219,16 +224,64 @@ function MarkDetail({ coin }: { coin: CoinSignal }) {
       <details className="mt-8 text-sm text-muted-foreground">
         <summary className="cursor-pointer text-foreground">How the mark is chosen</summary>
         <p className="mt-3 max-w-2xl leading-6">
-          Wick reads public CoinGecko prices. Stretch is RSI({RULES.rsiPeriod}): under {RULES.rsiBuy}{" "}
-          leans buy, over {RULES.rsiSell} leans sell. Trend compares the {RULES.smaFast}-day average
-          with the {RULES.smaSlow}-day average and votes when they differ by more than{" "}
-          {RULES.trendGap * 100}%. Week votes when the seven-day move is past {RULES.weekBand}% in
-          either direction. The mark flips only when {RULES.agree} rules share a side. A straight
-          rally can stay hold, because a maxed RSI disagrees with the trend. This is not financial
-          advice.
+          The mark uses CoinGecko daily closes. CoinMarketCap and CoinStats are checked against
+          that price, and a wide gap is called out, but they do not vote. Stretch is RSI(
+          {RULES.rsiPeriod}): under {RULES.rsiBuy} leans buy, over {RULES.rsiSell} leans sell. Trend
+          compares the {RULES.smaFast}-day average with the {RULES.smaSlow}-day average and votes when
+          they differ by more than {RULES.trendGap * 100}%. Week votes when the seven-day move is past{" "}
+          {RULES.weekBand}% in either direction. The mark flips only when {RULES.agree} rules share a
+          side. A straight rally can stay hold, because a maxed RSI disagrees with the trend. This is
+          not financial advice.
         </p>
       </details>
     </article>
+  );
+}
+
+function SourceList({ coin }: { coin: CoinSignal }) {
+  return (
+    <section className="mt-8">
+      <h2 className="text-xs tracking-[0.18em] text-muted-foreground uppercase">Sources</h2>
+      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{coin.spreadNote}</p>
+      <ul className="mt-3 divide-y border-y">
+        {(coin.sources ?? []).map((source) => {
+          const different =
+            source.listedAs && source.listedAs.toLowerCase() !== coin.name.toLowerCase();
+          return (
+            <li key={source.source} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3">
+              <span>
+                {source.href ? (
+                  <a
+                    href={source.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium underline-offset-4 hover:underline"
+                  >
+                    {source.label}
+                  </a>
+                ) : (
+                  <span className="font-medium">{source.label}</span>
+                )}
+                {different ? (
+                  <span className="ml-2 text-xs text-muted-foreground">listed as {source.listedAs}</span>
+                ) : null}
+              </span>
+              {source.price == null ? (
+                <span className="font-mono text-sm text-muted-foreground">No quote</span>
+              ) : (
+                <span className="font-mono text-sm">
+                  {formatUsd(source.price)}
+                  <span className={cn("ml-2", pctTone(source.change24h))}>{formatPct(source.change24h)}</span>
+                  {source.change7d != null ? (
+                    <span className="ml-2 text-muted-foreground">7d {formatPct(source.change7d)}</span>
+                  ) : null}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

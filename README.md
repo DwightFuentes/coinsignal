@@ -1,8 +1,10 @@
 # Wick
 
-Wick watches one to five coins on [CoinGecko](https://www.coingecko.com) and marks each one **buy**, **sell**, or **hold**.
+Wick watches one to five coins and marks each one **buy**, **sell**, or **hold**.
 
-You choose the coins. Wick polls public prices about once a minute and explains the mark with three rules:
+Prices are read from [CoinGecko](https://www.coingecko.com), [CoinMarketCap](https://coinmarketcap.com), and [CoinStats](https://coinstats.app). The mark uses CoinGecko's daily history. The other two prices are shown beside it, and Wick says when the three disagree.
+
+You choose the coins. Wick polls about once a minute and explains the mark with three rules:
 
 - **Stretch** — RSI(14). Under 30 leans buy. Over 70 leans sell.
 - **Trend** — the 7-day average versus the 21-day average. A gap wider than 0.5% votes.
@@ -26,4 +28,7 @@ npm test
 npm run lint
 ```
 
-The public CoinGecko API needs no key. If you have a demo key, set `COINGECKO_API_KEY` and the server will send it as `x-cg-demo-api-key`.
+No API key is required. Optional keys:
+
+- `COINGECKO_API_KEY` is sent as `x-cg-demo-api-key`.
+- `COINSTATS_API_KEY` is sent as `X-API-KEY` when the public coin route asks for one.

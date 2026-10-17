@@ -1,7 +1,9 @@
 import { CoinGeckoError, getDailyPrices, getMarkets } from "@/lib/coingecko";
 import { parseIds } from "@/lib/ids";
+import { getOutsideQuotes } from "@/lib/outside-quotes";
 import { buildSignal } from "@/lib/signal";
-import type { CoinSignal, SignalsResponse } from "@/lib/types";
+import { blankQuote, describeSources } from "@/lib/sources";
+import type { CoinSignal, SignalsResponse, SourceQuote } from "@/lib/types";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -12,17 +14,36 @@ export async function GET(request: NextRequest) {
 
   try {
     const markets = await getMarkets(ids);
-    const charts = await Promise.all(
-      ids.map(async (id) => {
-        try {
-          return { id, prices: await getDailyPrices(id), error: null };
-        } catch (error) {
-          const message =
-            error instanceof CoinGeckoError ? error.message : "Price history did not load.";
-          return { id, prices: [] as Array<[number, number]>, error: message };
-        }
-      }),
-    );
+    const [charts, outside] = await Promise.all([
+      Promise.all(
+        ids.map(async (id) => {
+          try {
+            return { id, prices: await getDailyPrices(id), error: null };
+          } catch (error) {
+            const message =
+              error instanceof CoinGeckoError ? error.message : "Price history did not load.";
+            return { id, prices: [] as Array<[number, number]>, error: message };
+          }
+        }),
+      ),
+      Promise.all(
+        ids.map(async (id) => {
+          const market = markets.find((quote) => quote.id === id);
+          if (!market) return { id, quotes: [] as SourceQuote[] };
+          try {
+            return { id, quotes: await getOutsideQuotes(market.id, market.symbol) };
+          } catch {
+            return {
+              id,
+              quotes: [
+                blankQuote("coinmarketcap", "CoinMarketCap"),
+                blankQuote("coinstats", "CoinStats"),
+              ],
+            };
+          }
+        }),
+      ),
+    ]);
 
     const coins: CoinSignal[] = [];
     const errors: SignalsResponse["errors"] = [];
@@ -42,6 +63,16 @@ export async function GET(request: NextRequest) {
         prices: chart?.prices ?? [],
         change7d: market.change7d,
       });
+      const gecko: SourceQuote = {
+        source: "coingecko",
+        label: "CoinGecko",
+        price: market.price,
+        change24h: market.change24h,
+        change7d: market.change7d,
+        href: `https://www.coingecko.com/en/coins/${market.id}`,
+        listedAs: null,
+      };
+      const sources = [gecko, ...(outside.find((entry) => entry.id === id)?.quotes ?? [])];
       coins.push({
         ...signal,
         id: market.id,
@@ -52,6 +83,8 @@ export async function GET(request: NextRequest) {
         change24h: market.change24h,
         marketCap: market.marketCap,
         volume24h: market.volume24h,
+        sources,
+        spreadNote: describeSources(sources).note,
       });
     }
 

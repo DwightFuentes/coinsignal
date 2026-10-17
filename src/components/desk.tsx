@@ -123,24 +123,27 @@ export function Desk() {
           Which coins should Wick watch?
         </h1>
         <p className="mt-4 max-w-xl text-muted-foreground">
-          Pick one to five. Wick reads daily prices from CoinGecko and marks each coin buy, sell, or
-          hold when {RULES.agree} of the 3 rules agree.
+          Pick one to five. Wick marks each coin buy, sell, or hold from CoinGecko, then checks that
+          price against CoinMarketCap and CoinStats.
         </p>
         <div className="mt-8 pb-28">
           <Picker selected={draft} onChange={setDraft} />
           <p className="mt-8 text-xs leading-5 text-muted-foreground">
             Marks are a mechanical reading of public prices, not financial advice. Stretch is RSI(
             {RULES.rsiPeriod}), Trend is the {RULES.smaFast}-day average against the {RULES.smaSlow}-day
-            average, and Week is the seven-day move. Prices come from{" "}
-            <a
-              className="underline underline-offset-2"
-              href="https://www.coingecko.com"
-              target="_blank"
-              rel="noreferrer"
-            >
+            average, and Week is the seven-day move. The mark follows{" "}
+            <a className="underline underline-offset-2" href="https://www.coingecko.com" target="_blank" rel="noreferrer">
               CoinGecko
             </a>
-            .
+            .{" "}
+            <a className="underline underline-offset-2" href="https://coinmarketcap.com" target="_blank" rel="noreferrer">
+              CoinMarketCap
+            </a>{" "}
+            and{" "}
+            <a className="underline underline-offset-2" href="https://coinstats.app" target="_blank" rel="noreferrer">
+              CoinStats
+            </a>{" "}
+            are the other two live prices.
           </p>
         </div>
         <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 backdrop-blur">

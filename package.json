@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 43127",
     "lint": "eslint",
-    "test": "tsx --test src/lib/signal.test.ts"
+    "test": "tsx --test src/lib/signal.test.ts src/lib/sources.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
